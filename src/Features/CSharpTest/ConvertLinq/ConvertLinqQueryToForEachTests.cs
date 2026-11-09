@@ -317,6 +317,25 @@ public sealed class ConvertLinqQueryToForEachTests : AbstractCSharpCodeActionTes
             }
             """);
 
+    [Theory]
+    [InlineData("leftjoin")]
+    [InlineData("rightjoin")]
+    public Task OuterJoin(string keyword)
+        => TestMissingAsync($$"""
+            using System;
+            using System.Collections.Generic;
+            using System.Linq;
+            class Query
+            {
+                public static IEnumerable<int> Main(int[] c1, int[] c2)
+                {
+                    return [|from x1 in c1
+                           {{keyword}} x2 in c2 on x1 equals x2
+                           select x1|];
+                }
+            }
+            """, new TestParameters(parseOptions: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview)));
+
     [Fact]
     public Task SelectFromType01()
         => TestInRegularAndScriptAsync("""

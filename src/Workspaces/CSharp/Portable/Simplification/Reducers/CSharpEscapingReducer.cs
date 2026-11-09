@@ -73,6 +73,8 @@ internal sealed partial class CSharpEscapingReducer : AbstractCSharpReducer
                 case SyntaxKind.IntoKeyword:
                 case SyntaxKind.OrderByKeyword:
                 case SyntaxKind.JoinKeyword:
+                case SyntaxKind.LeftJoinKeyword:
+                case SyntaxKind.RightJoinKeyword:
                 case SyntaxKind.LetKeyword:
                 case SyntaxKind.InKeyword:
                 case SyntaxKind.OnKeyword:

@@ -281,6 +281,8 @@ internal class CSharpSyntaxFacts : AbstractSyntaxFacts, ISyntaxFacts
         {
             case SyntaxKind.FromKeyword:
             case SyntaxKind.JoinKeyword:
+            case SyntaxKind.LeftJoinKeyword:
+            case SyntaxKind.RightJoinKeyword:
             case SyntaxKind.LetKeyword:
             case SyntaxKind.OrderByKeyword:
             case SyntaxKind.WhereKeyword:

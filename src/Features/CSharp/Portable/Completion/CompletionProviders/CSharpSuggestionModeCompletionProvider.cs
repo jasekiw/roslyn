@@ -59,7 +59,10 @@ internal sealed class CSharpSuggestionModeCompletionProvider() : AbstractSuggest
             {
                 return CreateEmptySuggestionModeItem();
             }
-            else if (token.IsKindOrHasMatchingText(SyntaxKind.FromKeyword) || token.IsKindOrHasMatchingText(SyntaxKind.JoinKeyword))
+            else if (token.IsKindOrHasMatchingText(SyntaxKind.FromKeyword) ||
+                token.IsKindOrHasMatchingText(SyntaxKind.JoinKeyword) ||
+                token.IsKindOrHasMatchingText(SyntaxKind.LeftJoinKeyword) ||
+                token.IsKindOrHasMatchingText(SyntaxKind.RightJoinKeyword))
             {
                 return CreateSuggestionModeItem(CSharpFeaturesResources.range_variable, CSharpFeaturesResources.Autoselect_disabled_due_to_potential_range_variable_declaration);
             }

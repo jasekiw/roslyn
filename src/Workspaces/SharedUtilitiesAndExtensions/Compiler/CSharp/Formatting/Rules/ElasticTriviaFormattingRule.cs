@@ -373,7 +373,7 @@ internal sealed class ElasticTriviaFormattingRule : BaseFormattingRule
         if ((currentToken.Kind() == SyntaxKind.FromKeyword && currentToken.Parent.IsKind(SyntaxKind.FromClause)) ||
             (currentToken.Kind() == SyntaxKind.LetKeyword && currentToken.Parent.IsKind(SyntaxKind.LetClause)) ||
             (currentToken.Kind() == SyntaxKind.WhereKeyword && currentToken.Parent.IsKind(SyntaxKind.WhereClause)) ||
-            (currentToken.Kind() == SyntaxKind.JoinKeyword && currentToken.Parent.IsKind(SyntaxKind.JoinClause)) ||
+            (currentToken.Kind() is SyntaxKind.JoinKeyword or SyntaxKind.LeftJoinKeyword or SyntaxKind.RightJoinKeyword && currentToken.Parent.IsKind(SyntaxKind.JoinClause)) ||
             (currentToken.Kind() == SyntaxKind.JoinKeyword && currentToken.Parent.IsKind(SyntaxKind.JoinIntoClause)) ||
             (currentToken.Kind() == SyntaxKind.OrderByKeyword && currentToken.Parent.IsKind(SyntaxKind.OrderByClause)) ||
             (currentToken.Kind() == SyntaxKind.SelectKeyword && currentToken.Parent.IsKind(SyntaxKind.SelectClause)) ||

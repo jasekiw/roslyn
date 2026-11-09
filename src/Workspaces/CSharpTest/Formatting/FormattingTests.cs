@@ -3228,6 +3228,32 @@ public sealed class FormattingTests : CSharpFormattingTestBase
                 }           
             """);
 
+    [Theory]
+    [InlineData("join")]
+    [InlineData("leftjoin")]
+    [InlineData("rightjoin")]
+    public Task QueryExpressionJoinClauseOnNewLine(string keyword)
+        => AssertFormatAsync($$"""
+            class C
+            {
+                void M(int[] xs, int[] ys)
+                {
+                    var q = from x in xs
+                            {{keyword}} y in ys on x equals y
+                            select y;
+                }
+            }
+            """, $$"""
+            class C
+            {
+                void M(int[] xs, int[] ys)
+                {
+                    var q = from x in xs {{keyword}} y in ys on x equals y
+                    select y;
+                }
+            }
+            """, parseOptions: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview));
+
     [Fact]
     public Task QueryExpression2()
         => AssertFormatAsync("""

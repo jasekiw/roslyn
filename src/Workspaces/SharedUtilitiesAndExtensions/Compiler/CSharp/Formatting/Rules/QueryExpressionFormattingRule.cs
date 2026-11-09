@@ -170,6 +170,8 @@ internal sealed class QueryExpressionFormattingRule : BaseFormattingRule
             case SyntaxKind.WhereKeyword:
             case SyntaxKind.LetKeyword:
             case SyntaxKind.JoinKeyword:
+            case SyntaxKind.LeftJoinKeyword:
+            case SyntaxKind.RightJoinKeyword:
             case SyntaxKind.OrderByKeyword:
             case SyntaxKind.GroupKeyword:
             case SyntaxKind.SelectKeyword:

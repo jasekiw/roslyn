@@ -1858,7 +1858,11 @@ internal static partial class SyntaxTreeExtensions
         }
 
         // join |
-        if (CodeAnalysis.CSharpExtensions.IsKind(token, SyntaxKind.JoinKeyword) &&
+        // leftjoin |
+        // rightjoin |
+        if ((CodeAnalysis.CSharpExtensions.IsKind(token, SyntaxKind.JoinKeyword) ||
+             CodeAnalysis.CSharpExtensions.IsKind(token, SyntaxKind.LeftJoinKeyword) ||
+             CodeAnalysis.CSharpExtensions.IsKind(token, SyntaxKind.RightJoinKeyword)) &&
             syntaxTree.IsValidContextForJoinClause(token.SpanStart, tokenOnLeftOfStart))
         {
             return true;

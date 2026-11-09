@@ -856,7 +856,8 @@ internal sealed class CSharpConvertLinqQueryToForEachProvider : AbstractConvertL
                             break;
                         case SyntaxKind.JoinClause:
                             var joinClause = (JoinClauseSyntax)queryClause;
-                            if (joinClause.Into == null) // GroupJoin is not supported
+                            // GroupJoin, LeftJoin and RightJoin are not supported
+                            if (joinClause.Into == null && joinClause.JoinKeyword.IsKind(SyntaxKind.JoinKeyword))
                             {
                                 if (queryExpressionProcessingInfo.TryAdd(joinClause, joinClause.Identifier))
                                 {
