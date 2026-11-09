@@ -926,4 +926,28 @@ public sealed class LeftRightJoinParsingTests : ParsingTests
         }
         EOF();
     }
+
+    [Fact]
+    public void SyntaxFactory_OverloadsWithoutKeywordCreateJoin()
+    {
+        var a = SyntaxFactory.IdentifierName("a");
+        var b = SyntaxFactory.IdentifierName("b");
+        var ds = SyntaxFactory.IdentifierName("ds");
+
+        var clauses = new[]
+        {
+            SyntaxFactory.JoinClause("d", ds, a, b),
+            SyntaxFactory.JoinClause(SyntaxFactory.Identifier("d"), ds, a, b),
+            SyntaxFactory.JoinClause(null, SyntaxFactory.Identifier("d"), ds, a, b, null),
+        };
+
+        foreach (var clause in clauses)
+        {
+            Assert.Equal(SyntaxKind.JoinKeyword, clause.JoinKeyword.Kind());
+            Assert.Equal("join d in ds on a equals b", clause.NormalizeWhitespace().ToFullString());
+        }
+
+        var leftJoin = SyntaxFactory.JoinClause(SyntaxFactory.Token(SyntaxKind.LeftJoinKeyword), "d", ds, a, b);
+        Assert.Equal("leftjoin d in ds on a equals b", leftJoin.NormalizeWhitespace().ToFullString());
+    }
 }

@@ -2824,6 +2824,18 @@ namespace Microsoft.CodeAnalysis.CSharp
                 ? AnonymousMethodExpression(asyncKeyword, delegateKeyword, parameterList, block, null)
                 : throw new ArgumentException(nameof(body));
 
+        /// <summary>Creates a new JoinClauseSyntax instance with the <c>join</c> keyword.</summary>
+        public static JoinClauseSyntax JoinClause(TypeSyntax? type, SyntaxToken identifier, ExpressionSyntax inExpression, ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, JoinIntoClauseSyntax? into)
+            => JoinClause(Token(SyntaxKind.JoinKeyword), type, identifier, inExpression, leftExpression, rightExpression, into);
+
+        /// <summary>Creates a new JoinClauseSyntax instance with the <c>join</c> keyword.</summary>
+        public static JoinClauseSyntax JoinClause(SyntaxToken identifier, ExpressionSyntax inExpression, ExpressionSyntax leftExpression, ExpressionSyntax rightExpression)
+            => JoinClause(Token(SyntaxKind.JoinKeyword), identifier, inExpression, leftExpression, rightExpression);
+
+        /// <summary>Creates a new JoinClauseSyntax instance with the <c>join</c> keyword.</summary>
+        public static JoinClauseSyntax JoinClause(string identifier, ExpressionSyntax inExpression, ExpressionSyntax leftExpression, ExpressionSyntax rightExpression)
+            => JoinClause(Token(SyntaxKind.JoinKeyword), identifier, inExpression, leftExpression, rightExpression);
+
         // BACK COMPAT OVERLOAD DO NOT MODIFY
         [Obsolete("The diagnosticOptions parameter is obsolete due to performance problems, if you are passing non-null use CompilationOptions.SyntaxTreeOptionsProvider instead", error: false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
