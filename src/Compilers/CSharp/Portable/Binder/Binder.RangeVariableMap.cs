@@ -26,6 +26,12 @@ namespace Microsoft.CodeAnalysis.CSharp
         private class RangeVariableMap : Dictionary<RangeVariableSymbol, ImmutableArray<string>>
         {
             public RangeVariableMap() { }
+
+            /// <summary>
+            /// Names of transparent identifiers whose value may be null because they were the outer side of a
+            /// <c>rightjoin</c>. Range variables read through them evaluate to <c>default</c> when they are null.
+            /// </summary>
+            public ImmutableHashSet<string> MaybeNullTransparentIdentifiers { get; set; } = ImmutableHashSet<string>.Empty;
         }
     }
 }

@@ -7586,12 +7586,31 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
 
             var syntax = node.Syntax;
+            if (node is BoundCall call && IsOuterJoinQueryCall(call))
+            {
+                return true;
+            }
+
             if (syntax.Kind() != SyntaxKind.InvocationExpression)
             {
                 // Unexpected syntax kind.
                 return false;
             }
             return HasImplicitTypeArguments(((InvocationExpressionSyntax)syntax).Expression);
+        }
+
+        /// <summary>
+        /// Whether the call is a query method call synthesized for a query that contains a leftjoin or rightjoin
+        /// clause. Type arguments of such calls are reinferred so that the maybe-null side of the join flows
+        /// into later clauses. Other queries keep their existing analysis.
+        /// </summary>
+        private static bool IsOuterJoinQueryCall(BoundCall call)
+        {
+            // Cast<T>() is the only query method call with explicit type arguments.
+            return call.Syntax is QueryClauseSyntax or SelectOrGroupClauseSyntax or OrderingSyntax &&
+                call.Method.Name != "Cast" &&
+                call.Syntax.FirstAncestorOrSelf<QueryExpressionSyntax>() is { } query &&
+                Binder.ContainsOuterJoin(query);
         }
 
         private static bool HasImplicitTypeArguments(SyntaxNode syntax)
@@ -13407,7 +13426,17 @@ namespace Microsoft.CodeAnalysis.CSharp
         public override BoundNode? VisitRangeVariable(BoundRangeVariable node)
         {
             VisitWithoutDiagnostics(node.Value);
-            SetNotNullResult(node); // https://github.com/dotnet/roslyn/issues/29863 Need to review this
+            if (node.RangeVariableSymbol.IsInOuterJoinQuery)
+            {
+                // The null side of a leftjoin/rightjoin is maybe-null, which is only observable by flowing
+                // the state of the translated value.
+                SetResultType(node, ResultType);
+            }
+            else
+            {
+                SetNotNullResult(node); // https://github.com/dotnet/roslyn/issues/29863 Need to review this
+            }
+
             return null;
         }
 
@@ -13639,7 +13668,19 @@ namespace Microsoft.CodeAnalysis.CSharp
         public override BoundNode? VisitQueryClause(BoundQueryClause node)
         {
             var result = base.VisitQueryClause(node);
-            SetNotNullResult(node); // https://github.com/dotnet/roslyn/issues/29863 Implement nullability analysis in LINQ queries
+            if (ResultType.Type is { } inferredType &&
+                node.Syntax.FirstAncestorOrSelf<QueryExpressionSyntax>() is { } query &&
+                Binder.ContainsOuterJoin(query))
+            {
+                // Keep the re-inferred type so that the maybe-null side of a leftjoin/rightjoin
+                // flows through the transparent identifiers into later clauses.
+                SetResultType(node, TypeWithState.Create(inferredType, NullableFlowState.NotNull));
+            }
+            else
+            {
+                SetNotNullResult(node); // https://github.com/dotnet/roslyn/issues/29863 Implement nullability analysis in LINQ queries
+            }
+
             return result;
         }
 

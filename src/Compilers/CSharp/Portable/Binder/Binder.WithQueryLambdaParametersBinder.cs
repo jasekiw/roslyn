@@ -61,12 +61,72 @@ namespace Microsoft.CodeAnalysis.CSharp
                             var nextField = path[i];
                             translation = SelectField(node, translation, nextField, diagnostics);
                         }
+
+                        translation = GuardMaybeNullTransparentIdentifiers(node, translation, path, diagnostics);
                     }
 
                     return new BoundRangeVariable(node, qv, translation, translation.Type);
                 }
 
                 return base.BindRangeVariable(node, qv, diagnostics);
+            }
+
+            /// <summary>
+            /// Wraps <paramref name="value"/>, the access <c>P.path[^1]...path[0]</c>, as
+            /// <c>R == null ? default : value</c> for every receiver <c>R</c> along the path that is a transparent
+            /// identifier which may be null (the outer side of a <c>rightjoin</c>). Outer receivers are checked first.
+            /// </summary>
+            private BoundExpression GuardMaybeNullTransparentIdentifiers(SimpleNameSyntax node, BoundExpression value, ImmutableArray<string> path, BindingDiagnosticBag diagnostics)
+            {
+                var maybeNull = _rangeVariableMap.MaybeNullTransparentIdentifiers;
+                if (maybeNull.IsEmpty || value.Type is not { } type || type.IsErrorType())
+                {
+                    return value;
+                }
+
+                var parameter = base.lambdaSymbol.Parameters[0];
+
+                // The receiver of path[i] is the parameter when i is the last index, and the member path[i + 1] otherwise.
+                for (int i = 0; i < path.Length; i++)
+                {
+                    string receiverName = i == path.Length - 1 ? parameter.Name : path[i + 1];
+                    if (!maybeNull.Contains(receiverName))
+                    {
+                        continue;
+                    }
+
+                    BoundExpression receiver = new BoundParameter(node, parameter) { WasCompilerGenerated = true };
+                    for (int j = path.Length - 1; j > i; j--)
+                    {
+                        receiver = SelectField(node, receiver, path[j], BindingDiagnosticBag.Discarded);
+                        receiver.WasCompilerGenerated = true;
+                    }
+
+                    value = MakeNullGuard(node, receiver, value, type, diagnostics);
+                }
+
+                return value;
+            }
+
+            private BoundExpression MakeNullGuard(SimpleNameSyntax node, BoundExpression receiver, BoundExpression value, TypeSymbol type, BindingDiagnosticBag diagnostics)
+            {
+                var objectType = GetSpecialType(SpecialType.System_Object, diagnostics, node);
+                var boolType = GetSpecialType(SpecialType.System_Boolean, diagnostics, node);
+
+                CompoundUseSiteInfo<AssemblySymbol> useSiteInfo = GetNewCompoundUseSiteInfo(diagnostics);
+                var receiverConversion = Conversions.ClassifyImplicitConversionFromExpression(receiver, objectType, ref useSiteInfo);
+                diagnostics.Add(node, useSiteInfo);
+
+                var left = CreateConversion(receiver, receiverConversion, objectType, diagnostics);
+                var nullLiteral = new BoundLiteral(node, ConstantValue.Null, type: null) { WasCompilerGenerated = true };
+                var right = CreateConversion(nullLiteral, Conversion.NullLiteral, objectType, diagnostics);
+                left.WasCompilerGenerated = true;
+                right.WasCompilerGenerated = true;
+
+                var isNull = new BoundBinaryOperator(node, BinaryOperatorKind.ObjectEqual, ConstantValue.NotAvailable, methodOpt: null, constrainedToTypeOpt: null, LookupResultKind.Viable, left, right, boolType) { WasCompilerGenerated = true };
+                var defaultValue = new BoundDefaultExpression(node, type) { WasCompilerGenerated = true };
+
+                return new BoundConditionalOperator(node, isRef: false, isNull, defaultValue, value, constantValueOpt: null, naturalTypeOpt: type, wasTargetTyped: false, type) { WasCompilerGenerated = true };
             }
 
             private BoundExpression SelectField(SimpleNameSyntax node, BoundExpression receiver, string name, BindingDiagnosticBag diagnostics)

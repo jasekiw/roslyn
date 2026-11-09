@@ -14207,6 +14207,8 @@ done:
                         clauses.Add(this.ParseFromClause());
                         continue;
                     case SyntaxKind.JoinKeyword:
+                    case SyntaxKind.LeftJoinKeyword:
+                    case SyntaxKind.RightJoinKeyword:
                         clauses.Add(this.ParseJoinClause());
                         continue;
                     case SyntaxKind.LetKeyword:
@@ -14276,9 +14278,13 @@ done:
 
         private JoinClauseSyntax ParseJoinClause()
         {
-            Debug.Assert(this.CurrentToken.ContextualKind == SyntaxKind.JoinKeyword);
+            Debug.Assert(this.CurrentToken.ContextualKind is SyntaxKind.JoinKeyword or SyntaxKind.LeftJoinKeyword or SyntaxKind.RightJoinKeyword);
+            var joinKeyword = this.CurrentToken.ContextualKind == SyntaxKind.JoinKeyword
+                ? this.EatContextualToken(SyntaxKind.JoinKeyword)
+                : CheckFeatureAvailability(ConvertToKeyword(this.EatToken()), MessageID.IDS_FeatureLeftRightJoin);
+
             return _syntaxFactory.JoinClause(
-                joinKeyword: this.EatContextualToken(SyntaxKind.JoinKeyword),
+                joinKeyword: joinKeyword,
                 type: this.PeekToken(1).Kind != SyntaxKind.InKeyword
                     ? this.ParseType()
                     : null,

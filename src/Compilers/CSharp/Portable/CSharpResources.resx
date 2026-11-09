@@ -8302,6 +8302,13 @@ To remove the warning, you can use /reference instead (set the Embed Interop Typ
   <data name="IDS_FeatureUnsafeEvolution" xml:space="preserve">
     <value>updated memory safety rules</value>
   </data>
+  <data name="IDS_FeatureLeftRightJoin" xml:space="preserve">
+    <value>leftjoin and rightjoin query clauses</value>
+  </data>
+  <data name="ERR_OuterJoinWithInto" xml:space="preserve">
+    <value>A '{0}' clause cannot have an 'into' continuation; use 'join ... into' instead</value>
+    <comment>'join' and 'into' are C# keywords and should not be localized. {0} is 'leftjoin' or 'rightjoin'.</comment>
+  </data>
   <data name="ERR_UnsafeOperation" xml:space="preserve">
     <value>This operation may only be used in an unsafe context</value>
   </data>

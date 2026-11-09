@@ -19,15 +19,23 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         private readonly Location? _location;
         private readonly Symbol _containingSymbol;
 
-        internal RangeVariableSymbol(string Name, Symbol containingSymbol, Location? location, bool isTransparent = false)
+        internal RangeVariableSymbol(string Name, Symbol containingSymbol, Location? location, bool isTransparent = false, bool isInOuterJoinQuery = false)
         {
             _name = Name;
             _containingSymbol = containingSymbol;
             _location = location;
             this.IsTransparent = isTransparent;
+            this.IsInOuterJoinQuery = isInOuterJoinQuery;
         }
 
         internal bool IsTransparent { get; }
+
+        /// <summary>
+        /// True when the query declaring this variable contains a <c>leftjoin</c> or <c>rightjoin</c> clause.
+        /// Nullable analysis only tracks the nullability of range variables of such queries, so that existing
+        /// queries do not observe new warnings.
+        /// </summary>
+        internal bool IsInOuterJoinQuery { get; }
 
         public override string Name
         {

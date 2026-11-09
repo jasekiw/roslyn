@@ -1929,7 +1929,12 @@
   <Node Name="JoinClauseSyntax" Base="QueryClauseSyntax">
     <Kind Name="JoinClause"/>
     <Field Name="JoinKeyword" Type="SyntaxToken">
+      <PropertyComment>
+        <summary>Gets the join keyword: <c>join</c>, <c>leftjoin</c> or <c>rightjoin</c>.</summary>
+      </PropertyComment>
       <Kind Name="JoinKeyword"/>
+      <Kind Name="LeftJoinKeyword"/>
+      <Kind Name="RightJoinKeyword"/>
     </Field>
     <Field Name="Type" Type="TypeSyntax" Optional="true"/>
     <Field Name="Identifier" Type="SyntaxToken">

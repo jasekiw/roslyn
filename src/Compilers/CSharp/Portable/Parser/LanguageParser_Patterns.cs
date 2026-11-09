@@ -447,6 +447,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
                                     return !CanStartExpression();
                                 }
                         }
+                    case SyntaxKind.LeftJoinKeyword:
+                    case SyntaxKind.RightJoinKeyword:
+                        // In `from x in e where x is T leftjoin y in ...` the identifier starts a join clause.
+                        // A designation can never be followed by an identifier or a predefined type, so this
+                        // only claims code that would otherwise fail to parse.
+                        return !(this.IsInQuery &&
+                            PeekToken(1) is var next &&
+                            (IsTrueIdentifier(next) || SyntaxFacts.IsPredefinedType(next.Kind)));
                     case SyntaxKind.UnderscoreToken: // discard is a valid pattern designation
                     default:
                         return true;

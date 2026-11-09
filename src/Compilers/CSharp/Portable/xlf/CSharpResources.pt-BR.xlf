@@ -402,6 +402,11 @@
         <target state="translated">O atributo AsyncMethodBuilder não é permitido em métodos anônimos sem um tipo de retorno explícito.</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_OuterJoinWithInto">
+        <source>A '{0}' clause cannot have an 'into' continuation; use 'join ... into' instead</source>
+        <target state="new">A '{0}' clause cannot have an 'into' continuation; use 'join ... into' instead</target>
+        <note>'join' and 'into' are C# keywords and should not be localized. {0} is 'leftjoin' or 'rightjoin'.</note>
+      </trans-unit>
       <trans-unit id="ERR_RequiresUnsafeExplicitlyImplementingSafe">
         <source>Unsafe member '{0}' cannot implement safe member '{1}'</source>
         <target state="translated">O membro não seguro "{0}" não pode implementar o membro seguro "{1}"</target>
@@ -3150,6 +3155,11 @@
       <trans-unit id="IDS_FeatureLambdaReturnType">
         <source>lambda return type</source>
         <target state="translated">tipo de retorno de lambda</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="IDS_FeatureLeftRightJoin">
+        <source>leftjoin and rightjoin query clauses</source>
+        <target state="new">leftjoin and rightjoin query clauses</target>
         <note />
       </trans-unit>
       <trans-unit id="IDS_FeatureListPattern">

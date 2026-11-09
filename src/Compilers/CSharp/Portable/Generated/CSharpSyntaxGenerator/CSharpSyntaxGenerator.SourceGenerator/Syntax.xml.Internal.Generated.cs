@@ -7380,6 +7380,7 @@ internal sealed partial class JoinClauseSyntax : QueryClauseSyntax
         }
     }
 
+    /// <summary>Gets the join keyword: <c>join</c>, <c>leftjoin</c> or <c>rightjoin</c>.</summary>
     public SyntaxToken JoinKeyword => this.joinKeyword;
     public TypeSyntax? Type => this.type;
     /// <summary>Gets the identifier.</summary>
@@ -30391,7 +30392,13 @@ internal partial class ContextAwareSyntax
     {
 #if DEBUG
         if (joinKeyword == null) throw new ArgumentNullException(nameof(joinKeyword));
-        if (joinKeyword.Kind != SyntaxKind.JoinKeyword) throw new ArgumentException(nameof(joinKeyword));
+        switch (joinKeyword.Kind)
+        {
+            case SyntaxKind.JoinKeyword:
+            case SyntaxKind.LeftJoinKeyword:
+            case SyntaxKind.RightJoinKeyword: break;
+            default: throw new ArgumentException(nameof(joinKeyword));
+        }
         if (identifier == null) throw new ArgumentNullException(nameof(identifier));
         if (identifier.Kind != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(identifier));
         if (inKeyword == null) throw new ArgumentNullException(nameof(inKeyword));
@@ -35813,7 +35820,13 @@ internal static partial class SyntaxFactory
     {
 #if DEBUG
         if (joinKeyword == null) throw new ArgumentNullException(nameof(joinKeyword));
-        if (joinKeyword.Kind != SyntaxKind.JoinKeyword) throw new ArgumentException(nameof(joinKeyword));
+        switch (joinKeyword.Kind)
+        {
+            case SyntaxKind.JoinKeyword:
+            case SyntaxKind.LeftJoinKeyword:
+            case SyntaxKind.RightJoinKeyword: break;
+            default: throw new ArgumentException(nameof(joinKeyword));
+        }
         if (identifier == null) throw new ArgumentNullException(nameof(identifier));
         if (identifier.Kind != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(identifier));
         if (inKeyword == null) throw new ArgumentNullException(nameof(inKeyword));

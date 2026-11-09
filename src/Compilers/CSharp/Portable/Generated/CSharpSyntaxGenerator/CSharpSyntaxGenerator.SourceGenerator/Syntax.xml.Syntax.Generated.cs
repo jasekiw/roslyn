@@ -4641,6 +4641,7 @@ public sealed partial class JoinClauseSyntax : QueryClauseSyntax
     {
     }
 
+    /// <summary>Gets the join keyword: <c>join</c>, <c>leftjoin</c> or <c>rightjoin</c>.</summary>
     public SyntaxToken JoinKeyword => new SyntaxToken(this, ((InternalSyntax.JoinClauseSyntax)this.Green).joinKeyword, Position, 0);
 
     public TypeSyntax? Type => GetRed(ref this.type, 1);

@@ -2514,6 +2514,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         ERR_IllegalUnsafeModifier = 9401,
         WRN_DeprecatedFeatureFlag = 9402,
         ERR_UnsafeUnassignedAddressOf = 9403,
+        ERR_OuterJoinWithInto = 9404,
 
         // Note: you will need to do the following after adding errors:
         //  1) Update ErrorFacts.IsBuildOnlyDiagnostic (src/Compilers/CSharp/Portable/Errors/ErrorFacts.cs)

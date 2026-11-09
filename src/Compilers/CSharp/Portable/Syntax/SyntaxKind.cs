@@ -433,6 +433,10 @@ namespace Microsoft.CodeAnalysis.CSharp
         /// <summary>Represents <see langword="safe"/>.</summary>
         [Experimental("RSEXPERIMENTAL006", UrlFormat = "https://github.com/dotnet/roslyn/issues/82789")]
         SafeKeyword = 8454,
+        /// <summary>Represents <see langword="leftjoin"/>.</summary>
+        LeftJoinKeyword = 8455,
+        /// <summary>Represents <see langword="rightjoin"/>.</summary>
+        RightJoinKeyword = 8456,
 
         // when adding a contextual keyword following functions must be adapted:
         // <see cref="SyntaxFacts.GetContextualKeywordKinds()"/>

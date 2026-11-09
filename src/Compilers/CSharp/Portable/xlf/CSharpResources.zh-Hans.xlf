@@ -402,6 +402,11 @@
         <target state="translated">没有显式返回类型的匿名方法不允许使用 AsyncMethodBuilder 属性。</target>
         <note />
       </trans-unit>
+      <trans-unit id="ERR_OuterJoinWithInto">
+        <source>A '{0}' clause cannot have an 'into' continuation; use 'join ... into' instead</source>
+        <target state="new">A '{0}' clause cannot have an 'into' continuation; use 'join ... into' instead</target>
+        <note>'join' and 'into' are C# keywords and should not be localized. {0} is 'leftjoin' or 'rightjoin'.</note>
+      </trans-unit>
       <trans-unit id="ERR_RequiresUnsafeExplicitlyImplementingSafe">
         <source>Unsafe member '{0}' cannot implement safe member '{1}'</source>
         <target state="translated">不安全的成员“{0}”无法实现安全成员“{1}”</target>
@@ -3150,6 +3155,11 @@
       <trans-unit id="IDS_FeatureLambdaReturnType">
         <source>lambda return type</source>
         <target state="translated">lambda 返回类型</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="IDS_FeatureLeftRightJoin">
+        <source>leftjoin and rightjoin query clauses</source>
+        <target state="new">leftjoin and rightjoin query clauses</target>
         <note />
       </trans-unit>
       <trans-unit id="IDS_FeatureListPattern">

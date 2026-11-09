@@ -89,6 +89,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             var fromClause = node.FromClause;
             var state = new QueryTranslationState();
+            state.hasOuterJoin = ContainsOuterJoin(node);
 
             RangeVariableSymbol x = state.rangeVariable = state.AddRangeVariable(this, fromClause.Identifier, diagnostics);
             for (int i = node.Body.Clauses.Count - 1; i >= 0; i--)
@@ -99,6 +100,25 @@ namespace Microsoft.CodeAnalysis.CSharp
             state.selectOrGroup = node.Body.SelectOrGroup;
 
             return (state, x);
+        }
+
+        /// <summary>
+        /// Whether the query, including its <c>into</c> continuations, contains a <c>leftjoin</c> or <c>rightjoin</c> clause.
+        /// </summary>
+        internal static bool ContainsOuterJoin(QueryExpressionSyntax query)
+        {
+            for (QueryBodySyntax? body = query.Body; body != null; body = body.Continuation?.Body)
+            {
+                foreach (var clause in body.Clauses)
+                {
+                    if (clause is JoinClauseSyntax join && !join.JoinKeyword.IsKind(SyntaxKind.JoinKeyword))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private RangeVariableSymbol PrepareQueryTranslationStateForContinuation(QueryTranslationState state, QueryContinuationSyntax continuation, BindingDiagnosticBag diagnostics)
@@ -138,7 +158,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                     case SyntaxKind.WhereClause:
                         return "Where";
                     case SyntaxKind.JoinClause:
-                        return ((JoinClauseSyntax)firstClause).Into == null ? "Join" : "GroupJoin";
+                        return GetJoinMethodName((JoinClauseSyntax)firstClause);
                     case SyntaxKind.OrderByClause:
                         var firstOrdering = ((OrderByClauseSyntax)firstClause).Orderings.First();
                         return firstOrdering.IsKind(SyntaxKind.DescendingOrdering) ? "OrderByDescending" : "OrderBy";
@@ -375,8 +395,33 @@ namespace Microsoft.CodeAnalysis.CSharp
             state.fromExpression = MakeQueryClause(where, invocation, queryInvocation: invocation);
         }
 
+        /// <summary>
+        /// <c>join</c>, <c>leftjoin</c> and <c>rightjoin</c> translate to <c>Join</c>, <c>LeftJoin</c> and <c>RightJoin</c>;
+        /// any of them with an <c>into</c> translates to <c>GroupJoin</c> (an error for <c>leftjoin</c>/<c>rightjoin</c>).
+        /// </summary>
+        private static string GetJoinMethodName(JoinClauseSyntax join)
+        {
+            if (join.Into != null)
+            {
+                return "GroupJoin";
+            }
+
+            return join.JoinKeyword.Kind() switch
+            {
+                SyntaxKind.LeftJoinKeyword => "LeftJoin",
+                SyntaxKind.RightJoinKeyword => "RightJoin",
+                _ => "Join",
+            };
+        }
+
         private void ReduceJoin(JoinClauseSyntax join, QueryTranslationState state, BindingDiagnosticBag diagnostics)
         {
+            if (join.Into != null && !join.JoinKeyword.IsKind(SyntaxKind.JoinKeyword))
+            {
+                diagnostics.Add(ErrorCode.ERR_OuterJoinWithInto, join.Into.IntoKeyword.GetLocation(), join.JoinKeyword.ValueText);
+            }
+
+            var joinMethodName = GetJoinMethodName(join);
             var inExpression = BindRValueWithoutTargetType(join.InExpression, diagnostics);
 
             // If the from expression is of the type dynamic we can't infer the types for any lambdas that occur in the query.
@@ -409,6 +454,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             var x2 = state.AddRangeVariable(this, join.Identifier, diagnostics);
             var innerKeySelectorLambda = MakeQueryUnboundLambda(QueryTranslationState.RangeVariableMap(x2), x2, join.RightExpression, diagnostics.AccumulatesDependencies);
 
+            if (join.JoinKeyword.IsKind(SyntaxKind.RightJoinKeyword) && x1.IsTransparent)
+            {
+                // RightJoin passes null for the outer element when an inner element has no match. When the outer
+                // element is a transparent identifier, every range variable read through it must yield default
+                // rather than dereference null.
+                state.maybeNullTransparentIdentifiers.Add(x1.Name);
+            }
+
             if (state.clauses.IsEmpty() && state.selectOrGroup.Kind() == SyntaxKind.SelectClause)
             {
                 var select = (SelectClauseSyntax)state.selectOrGroup;
@@ -421,12 +474,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                     //     select v
                     // is translated into
                     //     ( e1 ) . Join( e2 , x1 => k1 , x2 => k2 , ( x1 , x2 ) => v )
+                    // with LeftJoin or RightJoin in place of Join for leftjoin and rightjoin.
                     var resultSelectorLambda = MakeQueryUnboundLambda(state.RangeVariableMap(), ImmutableArray.Create(x1, x2), select.Expression, diagnostics.AccumulatesDependencies);
 
                     invocation = MakeQueryInvocation(
                         join,
                         state.fromExpression,
-                        "Join",
+                        joinMethodName,
                         ImmutableArray.Create(inExpression, outerKeySelectorLambda, innerKeySelectorLambda, resultSelectorLambda),
                         diagnostics
 #if DEBUG
@@ -489,12 +543,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                     //     from * in ( e1 ) . Join(
                     //           e2 , x1 => k1 , x2 => k2 , ( x1 , x2 ) => new { x1 , x2 })
                     //     ...
+                    // with LeftJoin or RightJoin in place of Join for leftjoin and rightjoin.
                     var resultSelectorLambda = MakePairLambda(join, state, x1, x2, diagnostics.AccumulatesDependencies);
 
                     invocation = MakeQueryInvocation(
                         join,
                         state.fromExpression,
-                        "Join",
+                        joinMethodName,
                         ImmutableArray.Create(inExpression, outerKeySelectorLambda, innerKeySelectorLambda, resultSelectorLambda),
                         diagnostics
 #if DEBUG
@@ -817,6 +872,22 @@ namespace Microsoft.CodeAnalysis.CSharp
 
             AnonymousTypeManager manager = this.Compilation.AnonymousTypeManager;
             NamedTypeSymbol anonymousType = manager.ConstructAnonymousTypeSymbol(typeDescriptor, diagnostics);
+
+            if (state.hasOuterJoin &&
+                !field1Value.HasAnyErrors && !field2Value.HasAnyErrors &&
+                !typeDescriptor.Fields.Any(static f => f.Type.IsErrorType()))
+            {
+                // Nullable analysis reinfers the field types of an anonymous object creation, which lets
+                // the maybe-null side of a leftjoin/rightjoin flow through the transparent identifier.
+                return new BoundAnonymousObjectCreationExpression(
+                    node,
+                    anonymousType.InstanceConstructors[0],
+                    ImmutableArray.Create(field1Value, field2Value),
+                    ImmutableArray<BoundAnonymousPropertyDeclaration>.Empty,
+                    anonymousType)
+                { WasCompilerGenerated = true };
+            }
+
             return MakeConstruction(node, anonymousType, ImmutableArray.Create(field1Value, field2Value), diagnostics);
 
             AnonymousTypeField createField(string fieldName, BoundExpression fieldValue) =>

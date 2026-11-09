@@ -49,6 +49,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             // of the current lambda expression.
             public readonly Dictionary<RangeVariableSymbol, ArrayBuilder<string>> allRangeVariables = new Dictionary<RangeVariableSymbol, ArrayBuilder<string>>();
 
+            // whether the query (including its continuations) contains a leftjoin or rightjoin clause
+            public bool hasOuterJoin;
+
+            // transparent identifiers that were the outer side of a rightjoin, and so may be null
+            public readonly HashSet<string> maybeNullTransparentIdentifiers = new HashSet<string>();
+
             public static RangeVariableMap RangeVariableMap(params RangeVariableSymbol[] parameters)
             {
                 var result = new RangeVariableMap();
@@ -66,13 +72,19 @@ namespace Microsoft.CodeAnalysis.CSharp
                 {
                     result.Add(vars, allRangeVariables[vars].ToImmutable());
                 }
+
+                if (maybeNullTransparentIdentifiers.Count != 0)
+                {
+                    result.MaybeNullTransparentIdentifiers = maybeNullTransparentIdentifiers.ToImmutableHashSet();
+                }
+
                 return result;
             }
 
             internal RangeVariableSymbol AddRangeVariable(Binder binder, SyntaxToken identifier, BindingDiagnosticBag diagnostics)
             {
                 string name = identifier.ValueText;
-                var result = new RangeVariableSymbol(name, binder.ContainingMemberOrLambda, identifier.GetLocation());
+                var result = new RangeVariableSymbol(name, binder.ContainingMemberOrLambda, identifier.GetLocation(), isInOuterJoinQuery: hasOuterJoin);
                 bool error = false;
 
                 Debug.Assert(identifier.Parent is { });
@@ -132,6 +144,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 selectOrGroup = null;
                 foreach (var b in allRangeVariables.Values) b.Free();
                 allRangeVariables.Clear();
+                maybeNullTransparentIdentifiers.Clear();
                 clauses.Clear();
             }
 
